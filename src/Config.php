@@ -17,6 +17,8 @@ class Config
     public function __construct(PDO $connectdb)
     {
         $this->connectdb = $connectdb;
+
+        return $this;
     }
 
     public function setTableName(string $tableName): self
