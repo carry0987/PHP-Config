@@ -1,0 +1,26 @@
+{
+    "name": "carry0987/config",
+    "description": "A library for easily manipulating config of php program",
+    "type": "library",
+    "require": {
+        "php": ">=7.4",
+        "carry0987/redis-tool": "^1.1"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "carry0987\\Config\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "carry0987"
+        }
+    ],
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require-dev": {
+        "php": ">=8.0",
+        "carry0987/sanite": "^1.1"
+    }
+}

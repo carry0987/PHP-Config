@@ -1,0 +1,108 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "dbca35b1a5860af8c00b6f6ecec19301",
+    "packages": [
+        {
+            "name": "carry0987/redis-tool",
+            "version": "1.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/carry0987/PHP-Redis-Tool.git",
+                "reference": "3bedb937a0ba6b449565eca38453bae6c597dec9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/carry0987/PHP-Redis-Tool/zipball/3bedb937a0ba6b449565eca38453bae6c597dec9",
+                "reference": "3bedb937a0ba6b449565eca38453bae6c597dec9",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "carry0987\\Redis\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "carry0987"
+                }
+            ],
+            "description": "A library for easily manipulating phpredis",
+            "keywords": [
+                "redis"
+            ],
+            "support": {
+                "issues": "https://github.com/carry0987/PHP-Redis-Tool/issues",
+                "source": "https://github.com/carry0987/PHP-Redis-Tool/tree/1.1.1"
+            },
+            "time": "2024-01-27T18:35:28+00:00"
+        }
+    ],
+    "packages-dev": [
+        {
+            "name": "carry0987/sanite",
+            "version": "1.1.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/carry0987/Sanite.git",
+                "reference": "e309d973c8ed8f0de2346f7f01015116ba535a10"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/carry0987/Sanite/zipball/e309d973c8ed8f0de2346f7f01015116ba535a10",
+                "reference": "e309d973c8ed8f0de2346f7f01015116ba535a10",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.0"
+            },
+            "require-dev": {
+                "php": ">=8.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "carry0987\\Sanite\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "carry0987"
+                }
+            ],
+            "description": "A PHP library that provide base CRUD structure and methods, using PDO.",
+            "support": {
+                "issues": "https://github.com/carry0987/Sanite/issues",
+                "source": "https://github.com/carry0987/Sanite/tree/1.1.5"
+            },
+            "time": "2023-12-05T10:32:31+00:00"
+        }
+    ],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": true,
+    "prefer-lowest": false,
+    "platform": {
+        "php": ">=7.4"
+    },
+    "platform-dev": {
+        "php": ">=8.0"
+    },
+    "plugin-api-version": "2.6.0"
+}
