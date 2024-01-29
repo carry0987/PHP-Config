@@ -12,6 +12,7 @@ $redisConfig = [
     'database' => 3
 ];
 $redis = new RedisTool($redisConfig);
+$redis->flushDatabase();
 
 // Create a database connection
 $db_host = 'mariadb';
@@ -24,10 +25,11 @@ $sanite = new Sanite($db_host, $db_name, $db_user, $db_password, $db_charset, $d
 
 // Start config
 $config = new Config($sanite->getConnection());
+$config->setRedis($redis);
 $config->setTableName('config')
     ->setIndexList([
-        'demo_config' => 1
-    ])->setRedis($redis)
-    ->addConfig('demo_config_2', 'test');
+        'demo_config' => 1,
+        'demo_config_2' => 69
+    ])->addConfig('demo_config_2', 'test');
 
 var_dump($config->getConfig('demo_config_2'));

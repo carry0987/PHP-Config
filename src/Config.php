@@ -2,13 +2,15 @@
 namespace carry0987\Config;
 
 use carry0987\Config\Exceptions\ConfigException;
+use carry0987\Redis\RedisTool;
 use PDO;
+use PDOStatement;
 use PDOException;
 
 class Config
 {
     private ?PDO $connectdb;
-    private ?object $redis;
+    private ?object $redis = null;
     private static string $tableName = 'config';
     private static array $configIndex;
 
@@ -31,27 +33,29 @@ class Config
         return $this;
     }
 
-    public function setRedis(?object $redis): self
+    public function setRedis(?RedisTool $redis): self
     {
-        $this->redis = $redis ?: null;
+        $this->redis = $redis;
 
         return $this;
     }
 
     public function addConfig(string $config_param, string|array $config_value): bool
     {
-        $config_value = (is_array($config_value)) ? serialize($config_value) : $config_value;
+        if ($this->getConfig($config_param, true) !== false) {
+            return $this->updateConfig($config_param, $config_value);
+        }
         if ($this->redis) {
-            $this->redis->setHashValue(self::$tableName, $config_param, $config_value);
+            $this->redis->setHashValue(self::$tableName, $config_param, self::serializeValue($config_value));
         }
         if (!isset(self::$configIndex[$config_param])) {
             return $this->addParamConfig($config_param, $config_value);
         }
 
-        return $this->executeStatement('add_config', [$config_param, $config_value]);
+        return $this->executeUpdate('add_config', [$config_param, $config_value]);
     }
 
-    public function getConfig(string $config_param, bool $only_value = false)
+    public function getConfig(string $config_param, bool $only_value = false): string|array|bool
     {
         if (!isset(self::$configIndex[$config_param])) {
             return $this->getParamConfig($config_param, $only_value);
@@ -60,16 +64,16 @@ class Config
             $redis_config = $this->redis->getHashValue(self::$tableName, $config_param);
             if ($redis_config) {
                 $result['param'] = $config_param;
-                $result['value'] = unserialize($redis_config);
+                $result['value'] = self::unserializeValue($redis_config);
+                $result['redis'] = true;
                 return ($only_value === true) ? $result['value'] : $result;
             }
         }
 
         try {
-            $stmt = $this->connectdb->prepare(self::getConfigQuery('get_config'));
-            $stmt->bindValue(1, self::$configIndex[$config_param], PDO::PARAM_INT);
-            $stmt->execute();
+            $stmt = $this->executeQuery('get_config', [self::$configIndex[$config_param]], true);
             $read_row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$read_row) return false;
         } catch (PDOException $e) {
             throw new ConfigException($e->getMessage(), $e->getCode());
         }
@@ -77,16 +81,19 @@ class Config
         // Get config
         $result['param'] = $read_row['param'];
         $value = (string) $read_row['value'];
+
+        // Update redis
         if ($this->redis) $this->redis->setHashValue(self::$tableName, $result['param'], $value);
-        $result['value'] = unserialize($value);
+
+        // Return config
+        $result['value'] = self::unserializeValue($value);
 
         return ($only_value === true) ? $result['value'] : $result;
     }
 
     public function updateConfig(string $config_param, string|array $config_value): bool
     {
-        $config_value = (is_array($config_value)) ? serialize($config_value) : $config_value;
-
+        $config_value = self::serializeValue($config_value);
         if ($this->redis) {
             $this->redis->setHashValue(self::$tableName, $config_param, $config_value);
         }
@@ -97,10 +104,7 @@ class Config
         $result = false;
 
         try {
-            $stmt = $this->connectdb->prepare(self::getConfigQuery('update_config'));
-            $stmt->bindValue(1, $config_value, PDO::PARAM_STR);
-            $stmt->bindValue(2, self::$configIndex[$config_param], PDO::PARAM_INT);
-            $result = $stmt->execute();
+            $result = $this->executeUpdate('update_config', [$config_value, self::$configIndex[$config_param]]);
         } catch (PDOException $e) {
             throw new ConfigException($e->getMessage(), $e->getCode());
         }
@@ -110,14 +114,11 @@ class Config
 
     private function addParamConfig(string $config_param, string|array $config_value): bool
     {
-        $config_value = (is_array($config_value)) ? serialize($config_value) : $config_value;
+        $config_value = self::serializeValue($config_value);
         $result = false;
 
         try {
-            $stmt = $this->connectdb->prepare(self::getConfigQuery('add_param_config'));
-            $stmt->bindValue(1, $config_param, PDO::PARAM_STR);
-            $stmt->bindValue(2, $config_value, PDO::PARAM_STR);
-            $result = $stmt->execute();
+            $result = $this->executeUpdate('add_param_config', [$config_param, $config_value]);
         } catch (PDOException $e) {
             throw new ConfigException($e->getMessage(), $e->getCode());
         }
@@ -125,13 +126,12 @@ class Config
         return $result;
     }
 
-    private function getParamConfig(string $config_param, bool $only_value = false)
+    private function getParamConfig(string $config_param, bool $only_value = false): string|array|bool
     {
         try {
-            $stmt = $this->connectdb->prepare(self::getConfigQuery('get_param_config'));
-            $stmt->bindValue(1, $config_param, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt = $this->executeQuery('get_param_config', [$config_param], true);
             $read_row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$read_row) return false;
         } catch (PDOException $e) {
             throw new ConfigException($e->getMessage(), $e->getCode());
         }
@@ -139,21 +139,18 @@ class Config
         // Get config
         $result['param'] = $config_param;
         $value = (string) $read_row['value'];
-        $result['value'] = unserialize($value);
+        $result['value'] = self::unserializeValue($value);
 
         return ($only_value === true) ? $result['value'] : $result;
     }
 
     private function updateParamConfig(string $config_param, string|array $config_value): bool
     {
-        $config_value = (is_array($config_value)) ? serialize($config_value) : $config_value;
+        $config_value = self::serializeValue($config_value);
         $result = false;
 
         try {
-            $stmt = $this->connectdb->prepare(self::getConfigQuery('update_param_config'));
-            $stmt->bindValue(1, $config_value, PDO::PARAM_STR);
-            $stmt->bindValue(2, $config_param, PDO::PARAM_STR);
-            $result = $stmt->execute();
+            $result = $this->executeUpdate('update_param_config', [$config_value, $config_param]);
         } catch (PDOException $e) {
             throw new ConfigException($e->getMessage(), $e->getCode());
         }
@@ -161,29 +158,39 @@ class Config
         return $result;
     }
 
-    private function executeStatement(string $queryName, array $params): bool
+    private function executeUpdate(string $queryName, array $params): bool
     {
-        $result = false;
-
         try {
             $stmt = $this->connectdb->prepare(self::getConfigQuery($queryName));
             foreach ($params as $index => $param) {
                 $stmt->bindValue($index + 1, $param, is_int($param) ? PDO::PARAM_INT : PDO::PARAM_STR);
             }
-            $result = $stmt->execute();
+            return $stmt->execute();
         } catch (PDOException $e) {
             throw new ConfigException($e->getMessage(), $e->getCode());
         }
+    }
 
-        return $result;
+    private function executeQuery(string $queryName, array $params): PDOStatement
+    {
+        try {
+            $stmt = $this->connectdb->prepare(self::getConfigQuery($queryName));
+            foreach ($params as $index => $param) {
+                $stmt->bindValue($index + 1, $param, is_int($param) ? PDO::PARAM_INT : PDO::PARAM_STR);
+            }
+            $stmt->execute();
+            return $stmt;
+        } catch (PDOException $e) {
+            throw new ConfigException($e->getMessage(), $e->getCode());
+        }
     }
 
     private static function serializeValue(string|array $value): string
     {
-        return is_array($value) ? serialize($value) : $value;
+        return serialize($value);
     }
 
-    private static function unserializeValue(string $value)
+    private static function unserializeValue(string $value): string|array
     {
         try {
             $data = unserialize($value);
