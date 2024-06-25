@@ -15,13 +15,15 @@ $redis = new RedisTool($redisConfig);
 $redis->flushDatabase();
 
 // Create a database connection
-$db_host = 'mariadb';
-$db_name = 'dev_config';
-$db_user = 'test_user';
-$db_password = 'test1234';
-$db_charset = 'utf8mb4';
-$db_port = 3306;
-$sanite = new Sanite($db_host, $db_name, $db_user, $db_password, $db_charset, $db_port);
+$db_config = [
+    'host' => 'mariadb',
+    'name' => 'dev_config',
+    'user' => 'test_user',
+    'password' => 'test1234',
+    'charset' => 'utf8mb4',
+    'port' => 3306
+];
+$sanite = new Sanite($db_config);
 
 // Start config
 $config = new Config($sanite->getConnection());

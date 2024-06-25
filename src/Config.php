@@ -57,7 +57,7 @@ class Config
         return $this->executeUpdate('add_config', [$config_param, $config_value]);
     }
 
-    public function getConfig(string $config_param, bool $only_value = false): string|array|bool
+    public function getConfig(string $config_param, bool $only_value = true): string|array|bool
     {
         if (!isset(self::$configIndex[$config_param])) {
             return $this->getParamConfig($config_param, $only_value);
